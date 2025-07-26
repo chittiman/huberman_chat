@@ -205,3 +205,9 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+data/
+notebooks/
+rough/
+# Ignore all .DS_Store files in any directory
+.DS_Store
