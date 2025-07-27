@@ -65,27 +65,33 @@ For each question, provide this exact JSON structure:
 
 ```json
 {
+  "question_id": "Unique integer identifier for the question, starting from 1 and incrementing sequentially",
   "question": "The actual question a user might ask",
-  "expected_answer_type": "descriptive|prescriptive|methodological", 
+  "expected_answer_type": "descriptive|prescriptive|methodological",
   "context_requirements": "Brief description of what information is needed to answer",
-  "ground_truth_reference": ["List of chapter headings or timestamps that contain the answer"],
+  "ground_truth_reference": ["List of integer chapter_ids that contain the answer"],
   "difficulty_level": "simple|moderate|complex",
   "answer_scope": "single_chapter|cross_chapter",
   "question_category": "Topic category (e.g., sleep, exercise, nutrition)"
 }
 ```
 
+### Important Instructions
+- **`question_id`**: This must be a unique integer for each question, starting from 1 and incrementing sequentially.
+- **`ground_truth_reference`**: This must be a list of one or more integer `chapter_id`s that directly contain the information needed to answer the question. Reference the `chapter_id` from the input data.
+
 ### Examples
 
 **Example 1:**
 ```json
 {
+  "question_id": 1,
   "question": "How do I know if I'm pushing my workouts too hard?",
   "expected_answer_type": "descriptive",
   "context_requirements": "Information about signs and symptoms of overtraining or excessive workout intensity",
-  "ground_truth_reference": ["Training Recovery and Warning Signs (timestamp: 15:30)"],
+  "ground_truth_reference": [5],
   "difficulty_level": "simple",
-  "answer_scope": "single_chapter", 
+  "answer_scope": "single_chapter",
   "question_category": "exercise"
 }
 ```
@@ -93,10 +99,11 @@ For each question, provide this exact JSON structure:
 **Example 2:**
 ```json
 {
+  "question_id": 2,
   "question": "What should I do if I feel overtrained but don't want to skip my workout completely?",
   "expected_answer_type": "prescriptive",
   "context_requirements": "Recommendations for modifying training when experiencing overtraining symptoms",
-  "ground_truth_reference": ["Training Modifications and Recovery (timestamp: 42:15)"],
+  "ground_truth_reference": [8],
   "difficulty_level": "moderate",
   "answer_scope": "single_chapter",
   "question_category": "exercise_recovery"
@@ -106,10 +113,11 @@ For each question, provide this exact JSON structure:
 **Example 3:**
 ```json
 {
+  "question_id": 3,
   "question": "Can sleeping help me recover after exercise?",
-  "expected_answer_type": "prescriptive", 
+  "expected_answer_type": "prescriptive",
   "context_requirements": "Information connecting sleep patterns with exercise timing and recovery outcomes",
-  "ground_truth_reference": ["Sleep Optimization (timestamp: 8:20)", "Exercise Timing (timestamp: 35:40)"],
+  "ground_truth_reference": [2, 9],
   "difficulty_level": "complex",
   "answer_scope": "cross_chapter",
   "question_category": "recovery"

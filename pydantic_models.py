@@ -20,38 +20,42 @@ class AnswerScope(str, Enum):
 
 
 class RAGQuestion(BaseModel):
+    question_id: int = Field(
+        ...,
+        description="Unique identifier for the question, starting from 1"
+    )
     question: str = Field(
-        ..., 
+        ...,
         description="The actual question a user might ask",
         min_length=10,
         max_length=500
     )
     expected_answer_type: AnswerType = Field(
-        ..., 
+        ...,
         description="Type of content function the question targets"
     )
     context_requirements: str = Field(
-        ..., 
+        ...,
         description="Brief description of what information is needed to answer",
         min_length=10,
         max_length=300
     )
-    ground_truth_reference: List[str] = Field(
-        ..., 
-        description="List of chapter headings or timestamps that contain the answer",
+    ground_truth_reference: List[int] = Field(
+        ...,
+        description="List of chapter_id integers that contain the answer",
         min_items=1,
         max_items=5
-    ) # type: ignore
+    )  # type: ignore
     difficulty_level: DifficultyLevel = Field(
-        ..., 
+        ...,
         description="Complexity level of the question"
     )
     answer_scope: AnswerScope = Field(
-        ..., 
+        ...,
         description="Whether answer requires single chapter or cross-chapter synthesis"
     )
     question_category: str = Field(
-        ..., 
+        ...,
         description="Topic category (e.g., sleep, exercise, nutrition)",
         min_length=3,
         max_length=50
@@ -61,10 +65,11 @@ class RAGQuestion(BaseModel):
         use_enum_values = True
         json_schema_extra = {
             "example": {
+                "question_id": 1,
                 "question": "What physiological changes occur in the brain during REM sleep?",
                 "expected_answer_type": "descriptive",
                 "context_requirements": "Information about brain activity and physiological processes during REM sleep stage",
-                "ground_truth_reference": ["REM Sleep Brain Activity (timestamp: 15:30)"],
+                "ground_truth_reference": [2],
                 "difficulty_level": "moderate",
                 "answer_scope": "single_chapter",
                 "question_category": "sleep"
@@ -74,21 +79,22 @@ class RAGQuestion(BaseModel):
 
 class RAGQuestionSet(BaseModel):
     questions: List[RAGQuestion] = Field(
-        ..., 
+        ...,
         description="List of generated questions for RAG evaluation",
         min_items=4,
         max_items=8
-    ) # type: ignore
-    
+    )  # type: ignore
+
     class Config:
         json_schema_extra = {
             "example": {
                 "questions": [
                     {
+                        "question_id": 1,
                         "question": "What physiological changes occur in the brain during REM sleep?",
                         "expected_answer_type": "descriptive",
                         "context_requirements": "Information about brain activity and physiological processes during REM sleep stage",
-                        "ground_truth_reference": ["REM Sleep Brain Activity (timestamp: 15:30)"],
+                        "ground_truth_reference": [2],
                         "difficulty_level": "moderate",
                         "answer_scope": "single_chapter",
                         "question_category": "sleep"

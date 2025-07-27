@@ -22,8 +22,8 @@ Generate evaluation questions for a RAG system based on the following structured
 - [ ] Content types match what's actually available in the data
 - [ ] Mix of difficulty levels when content allows
 - [ ] Both single-chapter and cross-chapter questions included when appropriate
-- [ ] Ground truth references match actual chapter headings/timestamps
+- [ ] Ground truth references match actual `chapter_id`s from the input
 - [ ] Questions are specific and focused
-- [ ] Total question count is 4-8 based on content richness
+- [ ] Total question count is 2-4 based on content richness
 
 Generate the questions in the specified JSON format.
