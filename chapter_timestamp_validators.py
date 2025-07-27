@@ -62,8 +62,8 @@ def validate_timestamps(transcript_file, chapters_file):
         final_transcript_seconds = get_final_transcript_timestamp(transcript_content)
         final_transcript_time = str(timedelta(seconds=int(final_transcript_seconds)))
         
-        # print(f"Final transcript timestamp: {final_transcript_time} ({final_transcript_seconds:.3f} seconds)")
-        # print("-" * 60)
+        print(f"Final transcript timestamp: {final_transcript_time} ({final_transcript_seconds:.3f} seconds)")
+        print("-" * 60)
         
         # Validate each chapter timestamp
         valid_timestamps = []
@@ -83,7 +83,7 @@ def validate_timestamps(transcript_file, chapters_file):
                         'heading': heading,
                         'status': 'VALID'
                     })
-                    # print(f"✓ {timestamp} ({chapter_seconds:.1f}s) - {heading}")
+                    print(f"✓ {timestamp} ({chapter_seconds:.1f}s) - {heading}")
                 else:
                     invalid_timestamps.append({
                         'timestamp': timestamp,
@@ -102,12 +102,12 @@ def validate_timestamps(transcript_file, chapters_file):
                 })
                 print(f"✗ {timestamp} - {heading} [PARSE ERROR: {e}]")
         
-        # # Summary
-        # print("-" * 60)
-        # print(f"VALIDATION SUMMARY:")
-        # print(f"Total chapters: {len(chapters_data.get('chapters', []))}")
-        # print(f"Valid timestamps: {len(valid_timestamps)}")
-        # print(f"Invalid timestamps: {len(invalid_timestamps)}")
+        # Summary
+        print("-" * 60)
+        print(f"VALIDATION SUMMARY:")
+        print(f"Total chapters: {len(chapters_data.get('chapters', []))}")
+        print(f"Valid timestamps: {len(valid_timestamps)}")
+        print(f"Invalid timestamps: {len(invalid_timestamps)}")
         
         if invalid_timestamps:
             print(f"\nINVALID TIMESTAMPS:{chapters_file}")
@@ -115,7 +115,7 @@ def validate_timestamps(transcript_file, chapters_file):
                 print(f"  - {item['timestamp']} ({item['heading']}): {item['status']}")
             return False
         else:
-            # print(f"\n✓ All timestamps are valid and within transcript bounds!")
+            print(f"\n✓ All timestamps are valid and within transcript bounds!")
             return True
             
     except FileNotFoundError as e:

@@ -67,6 +67,7 @@ if __name__ == "__main__":
     if not chapters_files:
         print("No transcript files found in data/chapters.")
     else:
+        # for chapters_path in tqdm(chapters_files[:5], desc="Processing transcripts"):
         for chapters_path in tqdm(random.sample(chapters_files,5), desc="Processing transcripts"):
             try:
                 # Read the transcript file
