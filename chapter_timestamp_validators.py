@@ -1,28 +1,26 @@
-import os
-from pathlib import Path
 import json
 import re
-from datetime import datetime, timedelta
+from datetime import timedelta
+from pathlib import Path
+import logging
+from logging_config import setup_logging
+
+# Configure logging
+setup_logging(level=logging.INFO, log_to_file=True, log_file="validation.log")
+logger = logging.getLogger(__name__)
 
 def parse_srt_timestamp(timestamp_str):
     """Parse SRT timestamp format (HH:MM:SS,mmm) to total seconds"""
-    # Remove the arrow part if present
     timestamp_str = timestamp_str.split(' --> ')[0].strip()
-    
-    # Parse HH:MM:SS,mmm format
     time_part, ms_part = timestamp_str.split(',')
     hours, minutes, seconds = map(int, time_part.split(':'))
     milliseconds = int(ms_part)
-    
-    total_seconds = hours * 3600 + minutes * 60 + seconds + milliseconds / 1000
-    return total_seconds
+    return hours * 3600 + minutes * 60 + seconds + milliseconds / 1000
 
 def parse_chapter_timestamp(timestamp_str):
-    """Parse chapter timestamp format (M:SS or MM:SS) to total seconds"""
-    # Remove any extra characters and split by ':'
+    """Parse chapter timestamp format (M:SS or H:MM:SS) to total seconds"""
     timestamp_str = timestamp_str.strip()
     parts = timestamp_str.split(':')
-    
     if len(parts) == 2:
         minutes, seconds = map(int, parts)
         return minutes * 60 + seconds
@@ -34,191 +32,90 @@ def parse_chapter_timestamp(timestamp_str):
 
 def get_final_transcript_timestamp(transcript_content):
     """Extract the final timestamp from the transcript"""
-    # Find all timestamp lines in the transcript
     timestamp_pattern = r'\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}'
     timestamps = re.findall(timestamp_pattern, transcript_content)
-    
     if not timestamps:
         raise ValueError("No timestamps found in transcript")
-    
-    # Get the last timestamp's end time
     last_timestamp = timestamps[-1]
     end_time = last_timestamp.split(' --> ')[1]
-    
     return parse_srt_timestamp(end_time)
 
-def validate_timestamps(transcript_file, chapters_file):
-    """Main function to validate timestamps"""
+def validate_timestamps(transcript_file: Path, chapters_file: Path):
+    """Main function to validate timestamps for a single pair of files."""
     try:
-        # Read transcript file
-        with open(transcript_file, 'r', encoding='utf-8') as f:
-            transcript_content = f.read()
+        transcript_content = transcript_file.read_text(encoding='utf-8')
+        chapters_data = json.loads(chapters_file.read_text(encoding='utf-8'))
         
-        # Read chapters JSON file
-        with open(chapters_file, 'r', encoding='utf-8') as f:
-            chapters_data = json.load(f)
-        
-        # Get final timestamp from transcript
         final_transcript_seconds = get_final_transcript_timestamp(transcript_content)
-        final_transcript_time = str(timedelta(seconds=int(final_transcript_seconds)))
         
-        print(f"Final transcript timestamp: {final_transcript_time} ({final_transcript_seconds:.3f} seconds)")
-        print("-" * 60)
-        
-        # Validate each chapter timestamp
-        valid_timestamps = []
         invalid_timestamps = []
-        
-        for i, chapter in enumerate(chapters_data.get('chapters', [])):
+        for chapter in chapters_data.get('chapters', []):
             timestamp = chapter.get('timestamp', '')
-            heading = chapter.get('heading', f'Chapter {i+1}')
-            
+            heading = chapter.get('heading', 'N/A')
             try:
                 chapter_seconds = parse_chapter_timestamp(timestamp)
-                
-                if chapter_seconds <= final_transcript_seconds:
-                    valid_timestamps.append({
-                        'timestamp': timestamp,
-                        'seconds': chapter_seconds,
-                        'heading': heading,
-                        'status': 'VALID'
-                    })
-                    print(f"✓ {timestamp} ({chapter_seconds:.1f}s) - {heading}")
-                else:
-                    invalid_timestamps.append({
-                        'timestamp': timestamp,
-                        'seconds': chapter_seconds,
-                        'heading': heading,
-                        'status': 'INVALID - EXCEEDS TRANSCRIPT'
-                    })
-                    print(f"✗ {timestamp} ({chapter_seconds:.1f}s) - {heading} [EXCEEDS TRANSCRIPT]")
-                    
+                if chapter_seconds > final_transcript_seconds:
+                    invalid_timestamps.append(
+                        f"Timestamp '{timestamp}' exceeds transcript duration "
+                        f"({final_transcript_seconds:.2f}s) for chapter: '{heading}'"
+                    )
             except ValueError as e:
-                invalid_timestamps.append({
-                    'timestamp': timestamp,
-                    'seconds': None,
-                    'heading': heading,
-                    'status': f'INVALID - PARSE ERROR: {e}'
-                })
-                print(f"✗ {timestamp} - {heading} [PARSE ERROR: {e}]")
-        
-        # Summary
-        print("-" * 60)
-        print(f"VALIDATION SUMMARY:")
-        print(f"Total chapters: {len(chapters_data.get('chapters', []))}")
-        print(f"Valid timestamps: {len(valid_timestamps)}")
-        print(f"Invalid timestamps: {len(invalid_timestamps)}")
+                invalid_timestamps.append(f"Parse error for timestamp '{timestamp}': {e}")
         
         if invalid_timestamps:
-            print(f"\nINVALID TIMESTAMPS:{chapters_file}")
-            for item in invalid_timestamps:
-                print(f"  - {item['timestamp']} ({item['heading']}): {item['status']}")
+            for error in invalid_timestamps:
+                logger.warning(f"Invalid timestamp in {chapters_file.name}: {error}")
             return False
         else:
-            print(f"\n✓ All timestamps are valid and within transcript bounds!")
+            logger.info(f"All timestamps in {chapters_file.name} are valid.")
             return True
             
     except FileNotFoundError as e:
-        print(f"Error: File not found - {e}")
+        logger.error(f"File not found during validation: {e}")
         return False
-    except json.JSONDecodeError as e:
-        print(f"Error: Invalid JSON format - {e}")
+    except json.JSONDecodeError:
+        logger.error(f"Invalid JSON format in {chapters_file.name}")
         return False
     except Exception as e:
-        print(f"Error: {e}")
+        logger.error(f"An unexpected error occurred validating {transcript_file.name}: {e}", exc_info=True)
         return False
-
-# Example usage with sample data
-def test_with_sample_data():
-    """Test function using the provided sample data"""
-    
-    # Sample transcript content
-    transcript_content = """90
-00:03:37,296 --> 00:03:38,700
-It's a common phenotype.
-
-91
-00:03:38,700 --> 00:03:41,040
-Like we've studied it,
-and maybe 50% of people
-
-92
-00:03:41,040 --> 00:03:42,840
-with obesity have that."""
-    
-    # Sample chapters data
-    chapters_data = {
-        "overall_summary": "The video discusses the growing use of nicotine products...",
-        "chapters": [
-            {
-                "timestamp": "0:00",
-                "heading": "Nicotine Use Trends and Perceptions",
-                "content": "There is an increased use of various nicotine products..."
-            },
-            {
-                "timestamp": "0:36",
-                "heading": "Nicotine's Impact on ADHD and Executive Functions", 
-                "content": "The discussion focuses on how nicotine affects individuals..."
-            },
-            {
-                "timestamp": "1:31",
-                "heading": "Unique Properties of Nicotine as a Stimulant",
-                "content": "Nicotine is described as unique among stimulants..."
-            }
-        ]
-    }
-    
-    # Write sample files for testing
-    with open('sample_transcript.srt', 'w', encoding='utf-8') as f:
-        f.write(transcript_content)
-    
-    with open('sample_chapters.json', 'w', encoding='utf-8') as f:
-        json.dump(chapters_data, f, indent=2)
-    
-    print("Testing with sample data:")
-    print("=" * 60)
-    
-    # Run validation
-    result = validate_timestamps('sample_transcript.srt', 'sample_chapters.json')
-    
-    # Clean up sample files
-    import os
-    try:
-        os.remove('sample_transcript.srt')
-        os.remove('sample_chapters.json')
-    except:
-        pass
-    
-    return result
-
 
 def validate_all_transcripts_and_chapters():
     """
-    Validate all transcript/chapter pairs in data/subtitles and data/chapters.
-    Log mistakes to mistakes.txt.
+    Validate all transcript/chapter pairs, logging mistakes to a file.
     """
     subtitles_dir = Path("data/subtitles")
     chapters_dir = Path("data/chapters")
-    mistakes_path = Path("mistakes.txt")
-    mistakes = []
+    mistakes_log_path = Path("timestamp_mistakes.log")
+    
+    failed_files = []
 
-    for srt_file in subtitles_dir.glob("*.srt"):
-        json_file = chapters_dir / (srt_file.stem + ".json")
+    srt_files = list(subtitles_dir.glob("*.srt"))
+    if not srt_files:
+        logger.warning("No .srt files found in data/subtitles to validate.")
+        return
+
+    logger.info(f"Starting validation for {len(srt_files)} transcript(s)...")
+
+    for srt_file in srt_files:
+        json_file = chapters_dir / srt_file.with_suffix('.json').name
         if not json_file.exists():
-            mistakes.append(f"Missing chapters file for {srt_file.name}")
+            missing_msg = f"Missing chapters file for {srt_file.name}"
+            logger.warning(missing_msg)
+            failed_files.append(missing_msg)
             continue
-        result = validate_timestamps(str(srt_file), str(json_file))
-        if not result:
-            mistakes.append(f"{srt_file.name}")
+        
+        if not validate_timestamps(srt_file, json_file):
+            failed_files.append(srt_file.name)
 
-    if mistakes:
-        with open(mistakes_path, "w", encoding="utf-8") as f:
-            for line in mistakes:
+    if failed_files:
+        logger.warning(f"Validation complete. Found issues in {len(failed_files)} file(s).")
+        with open(mistakes_log_path, "w", encoding="utf-8") as f:
+            for line in failed_files:
                 f.write(line + "\n")
-        print(f"Mistakes logged to {mistakes_path}")
+        logger.info(f"List of files with errors logged to {mistakes_log_path}")
     else:
-        pass
-        # print("All transcript/chapter pairs are valid!")
+        logger.info("Validation complete. All transcript/chapter pairs are valid!")
 
 if __name__ == "__main__":
     validate_all_transcripts_and_chapters()

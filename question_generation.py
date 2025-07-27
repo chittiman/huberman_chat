@@ -1,17 +1,20 @@
 
 import os
 from pathlib import Path
-from pydantic_models import VideoAnalysis, RAGQuestionSet
+from pydantic_models import RAGQuestionSet
 from gemini_chat_completion import GeminiChat
 from typing import List
 import weave
 import json
 from tqdm import tqdm
-from logging import getLogger
-logger = getLogger(__name__)
-logger.setLevel("DEBUG")
+import logging
+from logging_config import setup_logging
 
-model_name = "gemini-2.5-flash"
+# Configure logging
+setup_logging(level=logging.INFO, log_to_file=True, log_file="question_generation.log")
+logger = logging.getLogger(__name__)
+
+model_name = "gemini-1.5-flash"
 # Setup GeminiChat instance for structured output
 gemini_chat = GeminiChat(
     prompts_dir="prompts/question_creation_prompts",
@@ -30,27 +33,34 @@ def generate_questions(chapters_path: Path, questions_path: Path):
     if not chapters_path.exists():
         logger.error(f"Chapters file {chapters_path} does not exist.")
         return
-    chapters_text = chapters_path.read_text(encoding='utf-8')
-    chapters_data = json.loads(chapters_text)
-    if not chapters_data:
-        logger.error(f"No valid chapters data found in {chapters_path}.")
-        return
 
-    # Prepare input for GeminiChat
-    input_data = {
-        "overall_summary": chapters_data.get("overall_summary", ""),
-        "chapters": json.dumps(chapters_data.get("chapters", []), indent=2),
-        "topics": chapters_data.get("topics", [])
-    }
+    try:
+        chapters_text = chapters_path.read_text(encoding='utf-8')
+        chapters_data = json.loads(chapters_text)
+        if not chapters_data or "chapters" not in chapters_data:
+            logger.warning(f"No valid chapters data found in {chapters_path}.")
+            return
 
-    questions_obj = gemini_chat.complete(input_data)
+        # Prepare input for GeminiChat
+        input_data = {
+            "overall_summary": chapters_data.get("overall_summary", ""),
+            "chapters": json.dumps(chapters_data.get("chapters", []), indent=2),
+            "topics": chapters_data.get("topics", [])
+        }
 
-    # Save output
-    questions_path.write_text(questions_obj.model_dump_json(indent=2), encoding='utf-8')
-    print(f"Questions saved to {questions_path}")
+        questions_obj = gemini_chat.complete(input_data)
+
+        # Save output
+        questions_path.write_text(questions_obj.model_dump_json(indent=2), encoding='utf-8')
+        logger.info(f"Successfully saved questions to {questions_path}")
+
+    except json.JSONDecodeError:
+        logger.error(f"Invalid JSON in {chapters_path}. Skipping.")
+    except Exception as e:
+        logger.error(f"Failed to generate questions for {chapters_path.name}: {e}", exc_info=True)
+
 
 if __name__ == "__main__":
-    # Example: process one transcript file
     import random
 
     weave.init('huberman-chat')
@@ -58,28 +68,26 @@ if __name__ == "__main__":
     data_dir = cur_dir / "data"
     chapters_dir = data_dir / "chapters"
     questions_dir = data_dir / "questions"
-
-    rough_dir = data_dir / "rough"
     questions_dir.mkdir(parents=True, exist_ok=True)
 
-    # Pick one .srt file for demonstration
     chapters_files: List[Path] = list(chapters_dir.glob("*.json"))
     if not chapters_files:
-        print("No transcript files found in data/chapters.")
+        logger.warning("No chapter files found in data/chapters.")
     else:
-        # for chapters_path in tqdm(chapters_files[:5], desc="Processing transcripts"):
-        for chapters_path in tqdm(random.sample(chapters_files,5), desc="Processing transcripts"):
+        # Process a random sample of 5 files for demonstration
+        files_to_process = random.sample(chapters_files, min(5, len(chapters_files)))
+        
+        for chapters_path in tqdm(files_to_process, desc="Generating questions"):
             try:
-                # Read the transcript file
                 output_path = questions_dir / f"{chapters_path.stem}.json"
                 if output_path.exists():
-                    print(f"Questions already exist for {chapters_path}, skipping.")
+                    logger.info(f"Questions already exist for {chapters_path.name}, skipping.")
                     continue
-                print(f"Generating questions for {chapters_path}...")
-                video_id = chapters_path.name.split('.')[0]
+
+                logger.info(f"Generating questions for {chapters_path.name}...")
+                video_id = chapters_path.stem
                 with weave.attributes({'video_id': video_id, 'model': model_name}):
-                # Generate questions using GeminiChat
                     generate_questions(chapters_path, output_path)
-                    # Generate chapters using GeminiChat
+
             except Exception as e:
-                logger.error(f"Error processing {chapters_path}: {e}")
+                logger.error(f"Error in main loop for {chapters_path.name}: {e}", exc_info=True)
