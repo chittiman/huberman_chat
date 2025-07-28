@@ -5,13 +5,17 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12.9"
 dependencies = [
+    "fastembed>=0.7.1",
     "google-genai>=1.25.0",
     "ipykernel>=6.29.5",
     "jupyter>=1.1.1",
     "llm-xml-parser>=0.1.3",
     "mlx-audio>=0.2.3",
     "openai>=1.95.0",
+    "pytest>=8.4.1",
+    "pytest-mock>=3.14.1",
     "python-dotenv>=1.1.1",
+    "qdrant-client>=1.15.0",
     "requests>=2.32.4",
     "weave>=0.51.56",
     "yt-dlp>=2025.6.30",
