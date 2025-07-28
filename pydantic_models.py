@@ -26,9 +26,7 @@ class RAGQuestion(BaseModel):
     )
     question: str = Field(
         ...,
-        description="The actual question a user might ask",
-        min_length=10,
-        max_length=500
+        description="The actual question a user might ask"
     )
     expected_answer_type: AnswerType = Field(
         ...,
@@ -36,15 +34,11 @@ class RAGQuestion(BaseModel):
     )
     context_requirements: str = Field(
         ...,
-        description="Brief description of what information is needed to answer",
-        min_length=10,
-        max_length=300
+        description="Brief description of what information is needed to answer"
     )
     ground_truth_reference: List[int] = Field(
         ...,
-        description="List of chapter_id integers that contain the answer",
-        min_items=1,
-        max_items=5
+        description="List of chapter_id integers that contain the answer"
     )  # type: ignore
     difficulty_level: DifficultyLevel = Field(
         ...,
@@ -56,9 +50,7 @@ class RAGQuestion(BaseModel):
     )
     question_category: str = Field(
         ...,
-        description="Topic category (e.g., sleep, exercise, nutrition)",
-        min_length=3,
-        max_length=50
+        description="Topic category (e.g., sleep, exercise, nutrition)"
     )
 
     class Config:
@@ -80,9 +72,7 @@ class RAGQuestion(BaseModel):
 class RAGQuestionSet(BaseModel):
     questions: List[RAGQuestion] = Field(
         ...,
-        description="List of generated questions for RAG evaluation",
-        min_items=4,
-        max_items=8
+        description="List of generated questions for RAG evaluation"
     )  # type: ignore
 
     class Config:
