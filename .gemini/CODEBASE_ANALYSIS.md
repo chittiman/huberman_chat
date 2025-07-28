@@ -20,11 +20,30 @@ The project follows a clear data pipeline:
 
 5.  **Timestamp Validation**: The `chapter_timestamp_validators.py` script serves as a data quality assurance tool. It compares the timestamps in the generated chapter files against the original `.srt` transcripts to ensure they are valid and within the video's duration, logging any discrepancies.
 
+## Retrieval Strategy: Qdrant-Native Hybrid Search
+
+To retrieve relevant context for user queries, the project will leverage a sophisticated hybrid search system built directly within Qdrant. This server-side approach is chosen for its performance and simplicity.
+
+1.  **Indexing (`create_qdrant_index.py`)**:
+    *   **Multi-Vector Model**: Each chapter document is indexed using three different types of vector embeddings to enable a multi-faceted search.
+        *   **Dense Vectors**: For capturing semantic, meaning-based relationships (e.g., using `all-MiniLM-L6-v2`).
+        *   **Sparse Vectors**: For keyword-based matching (e.g., using `SPLADE` or `BM25`).
+        *   **Late-Interaction Vectors**: For high-precision reranking (e.g., using `ColBERT`).
+    *   **Data Upload**: The `fastembed` library is used to generate these embeddings, which are then uploaded to a single Qdrant collection configured to handle multiple named vectors per point.
+
+2.  **Querying**:
+    *   User queries are transformed into the same three vector types.
+    *   A single, powerful query is sent to Qdrant's API, instructing it to perform a two-stage search in one operation:
+        1.  **Prefetch**: Qdrant first performs a parallel search using the dense and sparse vectors to retrieve a broad set of initial candidates.
+        2.  **Rerank**: It then uses the late-interaction (ColBERT) model to re-score and re-order this candidate set, providing a final, highly accurate ranking.
+
+This method offloads all complex search and fusion logic to the optimized Qdrant server, resulting in a cleaner and more performant retrieval system.
+
 ## Key Files and Components
 
 -   **`main.py`**: The main entry point of the application. Currently, it is a placeholder and does not contain any significant logic.
 
--   **`gemini_chat_completion.py`**: A core component that provides the `GeminiChat` class. This class is a reusable wrapper around the Google Gemini API, handling prompt loading, API calls (with retries), and parsing of both text and structured (Pydantic model) outputs.
+-   **`gemini_chat_completion.py`**: A core component that provides the `GeminiChat` class. This is a reusable wrapper around the Google Gemini API, handling prompt loading, API calls (with retries), and parsing of both text and structured (Pydantic model) outputs.
 
 -   **`pydantic_models.py`**: Defines the data structures used throughout the project. Key models include:
     -   `VideoAnalysis`: For the output of the chapter extraction process.
@@ -43,3 +62,4 @@ The project follows a clear data pipeline:
 -   **`prompts/`**: This directory contains the prompt templates (system and user) for the Gemini models, separating the model instructions from the application logic.
 
 -   **`data/`**: This directory is the central hub for all data, separated into subdirectories for each stage of the pipeline (subtitles, chapters, questions).
+

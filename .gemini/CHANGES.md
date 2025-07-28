@@ -2,6 +2,36 @@
 
 This file tracks significant changes made to the `huberman_chat` codebase.
 
+## Session: 2025-07-28 (End of Day)
+
+### 6. Began Qdrant Indexing Script with TDD
+
+-   **Files Added:**
+    -   `create_qdrant_index.py`
+    -   `tests/test_create_qdrant_index.py`
+-   **Description of Changes:**
+    -   Created the initial scaffolding for the Qdrant indexing script.
+    -   Implemented and unit-tested the first two helper functions, `prepare_chapter_document` and `load_chapter_data`, following a test-driven development (TDD) approach.
+-   **Reason for Change:**
+    -   To begin the implementation of the core indexing logic required for our new Qdrant-based hybrid search strategy, ensuring code quality and correctness from the start with unit tests.
+
+### 5. Established Testing Framework
+
+-   **Files Modified:**
+    -   `pyproject.toml`
+    -   `uv.lock`
+-   **Files Added:**
+    -   `tests/`
+-   **Description of Changes:**
+    -   Added `pytest` and `pytest-mock` as development dependencies to the project.
+    -   Created the `tests` directory to house all future test files.
+-   **Reason for Change:**
+    -   To formally establish a testing framework, enabling a robust, test-driven development process which improves code reliability and simplifies debugging.
+
+---
+*Previous entries below this line.*
+---
+
 ## Session: 2025-07-28
 
 ### 4. Simplified Pydantic Schema to Resolve API Errors
