@@ -2,6 +2,19 @@
 
 This file tracks significant changes made to the `huberman_chat` codebase.
 
+## Session: 2025-07-28
+
+### 4. Simplified Pydantic Schema to Resolve API Errors
+
+-   **Files Modified:**
+    -   `pydantic_models.py`
+
+-   **Description of Changes:**
+    -   Removed granular validation constraints (`min_length`, `max_length`, `min_items`, `max_items`) from the `RAGQuestion` and `RAGQuestionSet` Pydantic models.
+
+-   **Reason for Change:**
+    -   The question generation script was failing with a `400 INVALID_ARGUMENT` error from the Gemini API. The error message indicated that the Pydantic schema was too complex and restrictive. Simplifying the schema by removing these constraints resolves the API error while still enforcing the core data structure.
+
 ## Session: 2025-07-27
 
 ### 3. Refactored Application Logging
