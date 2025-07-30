@@ -2,6 +2,18 @@
 
 This file tracks significant changes made to the `huberman_chat` codebase.
 
+## Session: 2025-07-30
+
+### 1. Disabled HNSW for ColBERT Vectors in Qdrant Collection
+
+-   **Files Modified:**
+    -   `code_snippets/qdrant/01_create_collection.py`
+-   **Description of Changes:**
+    -   Added `hnsw_config=models.HnswConfigDiff(m=0)` to the `colbert` vector configuration in `01_create_collection.py`.
+    -   Included a comment `# Disable HNSW for reranking` to clarify the purpose.
+-   **Reason for Change:**
+    -   HNSW is not required for late-interaction (ColBERT) vectors, as they are primarily used for reranking where maximum similarity is determined directly, not through approximate nearest neighbor search. Disabling HNSW optimizes resource usage and performance for this specific vector type.
+
 ## Session: 2025-07-29
 
 ### 1. Corrected Pydantic Data Models
