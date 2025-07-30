@@ -2,6 +2,18 @@
 
 This file tracks significant changes made to the `huberman_chat` codebase.
 
+## Session: 2025-07-29
+
+### 1. Corrected Pydantic Data Models
+
+-   **Files Modified:**
+    -   `pydantic_models.py`
+-   **Description of Changes:**
+    -   Added the `video_id: str` field to the `VideoAnalysis` Pydantic model.
+    -   Added the `chapter_id: int` field to the `Chapter` Pydantic model.
+-   **Reason for Change:**
+    -   The existing models did not accurately reflect the structure of the JSON data, causing `ValidationError` and `AttributeError` failures in the test suite. These changes align the models with the data, ensuring proper validation and fixing the tests.
+
 ## Session: 2025-07-28 (End of Day)
 
 ### 6. Began Qdrant Indexing Script with TDD

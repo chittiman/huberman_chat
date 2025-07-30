@@ -96,6 +96,7 @@ class RAGQuestionSet(BaseModel):
 
 class Chapter(BaseModel):
     """Represents a single chapter in the video analysis."""
+    chapter_id: int = Field(..., description="Unique identifier for the chapter within a video.")
     timestamp: str = Field(..., description="Timestamp in format like '0:00' or '12:45'")
     heading: str = Field(..., description="Chapter heading describing the main topic")
     content: str = Field(..., description="Summary of the chapter content in proper sentences")
@@ -103,6 +104,7 @@ class Chapter(BaseModel):
 
 class VideoAnalysis(BaseModel):
     """Main video analysis structure containing summary, chapters, and topics."""
+    video_id: str = Field(..., description="Unique identifier for the video, derived from the filename.")
     overall_summary: str = Field(..., description="3-4 sentence summary of the entire video")
     chapters: List[Chapter] = Field(..., description="List of chapters with timestamps and content")
     topics: List[str] = Field(..., description="Key topics and keywords from the video")
