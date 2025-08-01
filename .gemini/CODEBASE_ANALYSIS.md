@@ -24,18 +24,21 @@ The project follows a clear data pipeline:
 
 To retrieve relevant context for user queries, the project will leverage a sophisticated hybrid search system built directly within Qdrant. This server-side approach is chosen for its performance and simplicity.
 
-1.  **Indexing (`create_qdrant_index.py`)**:
-    *   **Multi-Vector Model**: Each chapter document is indexed using three different types of vector embeddings to enable a multi-faceted search.
-        *   **Dense Vectors**: For capturing semantic, meaning-based relationships (e.g., using `all-MiniLM-L6-v2`).
-        *   **Sparse Vectors**: For keyword-based matching (e.g., using `SPLADE` or `BM25`).
-        *   **Late-Interaction Vectors**: For high-precision reranking (e.g., using `ColBERT`).
-    *   **Data Upload**: The `fastembed` library is used to generate these embeddings, which are then uploaded to a single Qdrant collection configured to handle multiple named vectors per point.
+The implementation will be housed in `create_qdrant_index.py`, which is currently empty and will be developed using the latest library versions.
+
+Updated code examples for `fastembed` and `qdrant` (v2.x) are available as interactive Marimo notebooks in the `code_snippets/` directory for reference. These demonstrate the multi-vector and hybrid search capabilities that will be implemented.
+
+The planned approach involves:
+
+1.  **Indexing**:
+    *   **Multi-Vector Model**: Each chapter document will be indexed using multiple vector embeddings (dense, sparse, and late-interaction) to enable a multi-faceted search.
+    *   **Data Upload**: The `fastembed` library will be used to generate these embeddings, which will then be uploaded to a single Qdrant collection configured for hybrid search.
 
 2.  **Querying**:
-    *   User queries are transformed into the same three vector types.
-    *   A single, powerful query is sent to Qdrant's API, instructing it to perform a two-stage search in one operation:
-        1.  **Prefetch**: Qdrant first performs a parallel search using the dense and sparse vectors to retrieve a broad set of initial candidates.
-        2.  **Rerank**: It then uses the late-interaction (ColBERT) model to re-score and re-order this candidate set, providing a final, highly accurate ranking.
+    *   User queries will be transformed into the same multiple vector types.
+    *   A single query will be sent to Qdrant's API to perform a two-stage search:
+        1.  **Prefetch**: A parallel search using dense and sparse vectors to retrieve a broad set of initial candidates.
+        2.  **Rerank**: The late-interaction model will be used to re-score and re-order the candidate set for high accuracy.
 
 This method offloads all complex search and fusion logic to the optimized Qdrant server, resulting in a cleaner and more performant retrieval system.
 

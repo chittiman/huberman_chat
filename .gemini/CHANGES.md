@@ -2,6 +2,27 @@
 
 This file tracks significant changes made to the `huberman_chat` codebase.
 
+## Session: 2025-08-01
+
+### 1. Reset Qdrant Implementation for Major Version Upgrade
+
+-   **Files Modified:**
+    -   `create_qdrant_index.py` (emptied)
+    -   `tests/test_create_qdrant_index.py` (emptied)
+    -   `.gemini/CODEBASE_ANALYSIS.md`
+-   **Files Added:**
+    -   `code_snippets/fast_embed/fastembed_examples.py` (Marimo notebook)
+    -   `code_snippets/qdrant/qdrant_examples.py` (Marimo notebook)
+-   **Files Deleted:**
+    -   Old Python script code snippets for Qdrant.
+-   **Description of Changes:**
+    -   Due to a major version upgrade in the Qdrant library, the existing indexing script and its corresponding test became obsolete. Both `create_qdrant_index.py` and `tests/test_create_qdrant_index.py` have been cleared to allow for a fresh start.
+    -   The old, outdated code snippets for Qdrant were deleted.
+    -   New, up-to-date code examples for `fastembed` and the new version of `qdrant` have been added as interactive Marimo notebooks in the `code_snippets/` directory. These will serve as a reference for the new implementation.
+    -   The `CODEBASE_ANALYSIS.md` file was updated to reflect this reset and the new reference-based approach.
+-   **Reason for Change:**
+    -   To address breaking changes from a Qdrant major version upgrade and to ensure the project is ready for a new implementation based on the latest, correct code examples.
+
 ## Session: 2025-07-30
 
 ### 1. Disabled HNSW for ColBERT Vectors in Qdrant Collection
